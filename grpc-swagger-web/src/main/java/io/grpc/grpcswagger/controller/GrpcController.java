@@ -16,6 +16,7 @@ import javax.annotation.PostConstruct;
 import javax.servlet.http.HttpServletRequest;
 
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -68,10 +69,42 @@ public class GrpcController {
     }
 
     @RequestMapping("/v2/api-docs")
-    public Object groupResponse(@RequestParam("service") String service, HttpServletRequest httpServletRequest) {
+    public Object groupResponse(@RequestParam(value = "service", required = false) String service,
+                                @RequestParam(value = "endPoint", required = false) String endPoint,
+                                HttpServletRequest httpServletRequest) {
         String apiHost = httpServletRequest.getHeader("Host");
-        SwaggerV2Documentation documentation = documentService.getDocumentation(service, apiHost);
-        return new SwaggerV2DocumentView(service, documentation);
+
+        if (StringUtils.isBlank(service) && StringUtils.isBlank(endPoint)) {
+            return Result.error("Either 'service' or 'endPoint' parameter must be provided.");
+        }
+
+        if (StringUtils.isBlank(service) && StringUtils.isNotBlank(endPoint)) {
+            List<SwaggerV2Documentation> docs = documentService.getDocsByEndPoint(endPoint);
+            if (CollectionUtils.isEmpty(docs)) {
+                return Result.error("No documentation found for the given endPoint: " + endPoint);
+            }
+
+            SwaggerV2Documentation combinedDoc = documentService.combineDocuments(docs);
+            return new SwaggerV2DocumentView(null, combinedDoc);
+        }
+
+        if (StringUtils.isNotBlank(service) && StringUtils.isBlank(endPoint)) {
+            SwaggerV2Documentation documentation = documentService.getDocumentation(service, apiHost, null);
+            if (documentation == null) {
+                return Result.error("No documentation found for the given service: " + service);
+            }
+            return new SwaggerV2DocumentView(service, documentation);
+        }
+
+        if (StringUtils.isNotBlank(service) && StringUtils.isNotBlank(endPoint)) {
+            SwaggerV2Documentation documentation = documentService.getDocumentation(service, apiHost, endPoint);
+            if (documentation == null) {
+                return Result.error("No documentation found for the given service and endPoint combination.");
+            }
+            return new SwaggerV2DocumentView(service, documentation);
+        }
+
+        return Result.error("Unexpected error occurred.");
     }
 
     @SneakyThrows
@@ -111,7 +144,7 @@ public class GrpcController {
         if (!AppConfig.enableListService()) {
             return Result.error("Not support this action.");
         }
-       return Result.success(getServiceConfigs());
+        return Result.success(getServiceConfigs());
     }
 
     @RequestMapping("/register")

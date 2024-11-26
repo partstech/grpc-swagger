@@ -17,7 +17,8 @@ import io.grpc.ManagedChannelBuilder;
 import io.grpc.grpcswagger.grpc.ServiceResolver;
 
 /**
- * @author liuzhengyang
+ * Utilities for registering gRPC services.
+ * Author: liuzhengyang
  */
 public class ServiceRegisterUtils {
 
@@ -45,7 +46,8 @@ public class ServiceRegisterUtils {
         List<DescriptorProtos.FileDescriptorSet> fileDescriptorSets = GrpcReflectionUtils.resolveServices(channel);
         fileDescriptorSets.forEach(fileDescriptorSet -> {
             ServiceResolver serviceResolver = ServiceResolver.fromFileDescriptorSet(fileDescriptorSet);
-            parseDefinition(serviceResolver);
+            String endPoint = hostAndPort.toString();
+            parseDefinition(serviceResolver, endPoint);
         });
         return fileDescriptorSets;
     }

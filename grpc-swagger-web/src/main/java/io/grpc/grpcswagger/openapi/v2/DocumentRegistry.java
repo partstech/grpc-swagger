@@ -5,8 +5,13 @@ import javax.annotation.Nullable;
 import io.grpc.grpcswagger.store.BaseStorage;
 import io.grpc.grpcswagger.store.StorageUtils;
 
+import java.util.Collection;
+
 /**
- * @author liuzhengyang
+ * Registry for storing and retrieving Swagger documentation.
+ * Supports fetching all documents.
+ *
+ * Author: liuzhengyang
  */
 public class DocumentRegistry {
     private static final DocumentRegistry INSTANCE = new DocumentRegistry();
@@ -24,5 +29,9 @@ public class DocumentRegistry {
     @Nullable
     public SwaggerV2Documentation get(String serviceName) {
         return storage.get(serviceName);
+    }
+
+    public Collection<SwaggerV2Documentation> getAll() {
+        return storage.getAll().values();
     }
 }
