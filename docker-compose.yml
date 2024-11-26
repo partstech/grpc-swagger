@@ -5,8 +5,4 @@ services:
     build: ./grpc-swagger-web
     ports:
       - 8080:8080
-  grpc-swagger-demo:
-    build: ./grpc-swagger-demo
-    ports:
-      - 1234:1234
 
