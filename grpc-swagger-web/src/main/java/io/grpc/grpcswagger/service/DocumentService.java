@@ -11,6 +11,7 @@ import io.grpc.grpcswagger.openapi.v2.SwaggerV2Documentation;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 import java.util.stream.Collectors;
 
 /**
@@ -27,9 +28,12 @@ public class DocumentService {
         if (swaggerV2Documentation != null) {
             swaggerV2Documentation.setHost(apiHost);
             swaggerV2Documentation.setEndPoint(endPoint);
+
+            sortPaths(swaggerV2Documentation);
         }
         return swaggerV2Documentation;
     }
+
 
     /**
      * @param endPoint address of gRPC service
@@ -69,6 +73,34 @@ public class DocumentService {
         });
         combined.setPaths(combinedPaths);
 
+        sortPaths(combined);
+        addTags(combined);
+
         return combined;
+    }
+
+    public void addTags(SwaggerV2Documentation documentation) {
+        if (documentation.getPaths() != null) {
+            documentation.getPaths().forEach((path, pathItem) -> {
+                String[] pathParts = path.split("\\.");
+                String serviceName = (pathParts.length > 2) ? pathParts[2].toLowerCase() : "default";
+                if (pathItem.getPost() != null) {
+                    pathItem.getPost().addTag(serviceName);
+                }
+            });
+        }
+    }
+
+
+
+    /**
+     * Asc sort
+     * @param documentation Swagger doc
+     */
+    public void sortPaths(SwaggerV2Documentation documentation) {
+        if (documentation.getPaths() != null) {
+            Map<String, PathItem> sortedPaths = new TreeMap<>(documentation.getPaths());
+            documentation.setPaths(sortedPaths);
+        }
     }
 }
